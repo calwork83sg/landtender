@@ -1,1255 +1,1470 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dormitory Land Tender Price Calculator</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-:root {
-    --primary: #1a3a5c; --secondary: #2c5282; --accent: #38a169;
-    --accent2: #d69e2e; --danger: #e53e3e; --light: #f7fafc;
-    --border: #e2e8f0; --text: #2d3748; --text-light: #718096;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--light); color: var(--text); line-height: 1.6; }
-.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-header { background: var(--primary); color: white; padding: 30px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-header h1 { font-size: 1.8rem; margin-bottom: 8px; }
-header p { opacity: 0.9; font-size: 0.95rem; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-.card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border); }
-.card h2 { font-size: 1.15rem; color: var(--primary); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.card h2 .icon { font-size: 1.3rem; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: all 0.2s; background: #fafafa; }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(44,82,130,0.1); background: white; }
-.form-group .hint { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
-.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-@media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
-.btn { background: var(--primary); color: white; border: none; padding: 14px 32px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-.btn:hover { background: var(--secondary); transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
-.btn-block { width: 100%; justify-content: center; margin-top: 10px; }
-.results-section { display: none; }
-.results-section.active { display: block; }
-.price-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-@media (max-width: 900px) { .price-cards { grid-template-columns: 1fr; } }
-.price-card { border-radius: 12px; padding: 25px; text-align: center; position: relative; overflow: hidden; }
-.price-card.conservative { background: #fff5f5; border: 2px solid #feb2b2; }
-.price-card.medium { background: #f0fff4; border: 2px solid #9ae6b4; }
-.price-card.aggressive { background: #fffff0; border: 2px solid #fbd38d; }
-.price-card .label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.price-card.conservative .label { color: #c53030; }
-.price-card.medium .label { color: #276749; }
-.price-card.aggressive .label { color: #975a16; }
-.price-card .amount { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
-.price-card.conservative .amount { color: #c53030; }
-.price-card.medium .amount { color: #276749; }
-.price-card.aggressive .amount { color: #975a16; }
-.price-card .per-psf { font-size: 0.9rem; color: var(--text-light); margin-bottom: 12px; }
-.price-card .reasoning { font-size: 0.8rem; text-align: left; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.08); color: var(--text); }
-.price-card .reasoning ul { margin: 8px 0 0 16px; }
-.price-card .reasoning li { margin-bottom: 4px; }
-.highlight-box { background: #ebf8ff; border-left: 4px solid var(--secondary); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 15px 0; font-size: 0.9rem; }
-.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-@media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 500px) { .summary-grid { grid-template-columns: 1fr; } }
-.summary-item { background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
-.summary-item .value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
-.summary-item .label { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
-.tabs { display: flex; gap: 4px; margin-bottom: 20px; background: #edf2f7; padding: 4px; border-radius: 10px; }
-.tab-btn { flex: 1; padding: 10px 16px; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--text-light); transition: all 0.2s; }
-.tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.tab-btn:hover:not(.active) { color: var(--text); }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
-th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--border); }
-th { background: #f7fafc; font-weight: 600; color: var(--primary); position: sticky; top: 0; }
-th:first-child, td:first-child { text-align: left; }
-tr:hover { background: #f7fafc; }
-.positive { color: var(--accent); font-weight: 600; }
-.negative { color: var(--danger); font-weight: 600; }
-.chart-container { position: relative; height: 350px; margin: 20px 0; }
-.section-title { font-size: 1.3rem; color: var(--primary); margin: 30px 0 15px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
-.tax-note { background: #fffaf0; border: 1px solid #fbd38d; border-radius: 8px; padding: 12px 16px; font-size: 0.85rem; color: #744210; margin: 10px 0; }
-.final-profit { background: var(--primary); color: white; border-radius: 12px; padding: 30px; text-align: center; margin-top: 25px; }
-.final-profit .label { font-size: 1rem; opacity: 0.9; margin-bottom: 8px; }
-.final-profit .amount { font-size: 2.5rem; font-weight: 800; }
-.final-profit .sub { font-size: 0.9rem; opacity: 0.8; margin-top: 8px; }
-.scenario-selector { display: flex; gap: 10px; margin-bottom: 20px; }
-.scenario-btn { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-weight: 600; transition: all 0.2s; text-align: center; }
-.scenario-btn.active { border-color: var(--secondary); background: #ebf8ff; color: var(--secondary); }
-.scenario-btn:hover { border-color: var(--secondary); }
-.loading { display: none; text-align: center; padding: 40px; }
-.loading.active { display: block; }
-.spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dormitory Land Tender - Residual Land Value Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@media print {
-    body { background: white; }
-    .container { max-width: 100%; padding: 10px; }
-    header { background: #1a3a5c !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
-    .price-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .price-card.conservative { background: #fff5f5 !important; }
-    .price-card.medium { background: #f0fff4 !important; }
-    .price-card.aggressive { background: #fffff0 !important; }
-    .final-profit { background: #1a3a5c !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .summary-item { border: 1px solid #ddd; }
-    .highlight-box { background: #ebf8ff !important; border-left: 4px solid #2c5282 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .tax-note { background: #fffaf0 !important; border: 1px solid #fbd38d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    table { font-size: 7pt; }
-    th, td { padding: 4px 6px; }
-    .btn, .scenario-selector, .tabs { display: none !important; }
-    .chart-container { display: none !important; }
-    .results-section { display: block !important; }
-    .results-section.active { display: block !important; }
-    #loading { display: none !important; }
-}
-</style>
+        :root {
+            --primary: #1a3a5c;
+            --secondary: #2c5282;
+            --accent: #ed8936;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --warning: #d69e2e;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card h2 .icon {
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .input-group .hint {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin-bottom: 0.35rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.6rem 0.9rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .result-box.highlight {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            border-left-color: var(--success);
+        }
+
+        .result-box.warning {
+            background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%);
+            border-left-color: var(--warning);
+        }
+
+        .result-box.danger {
+            background: linear-gradient(135deg, #fed7d7 0%, #fc8181 100%);
+            border-left-color: var(--danger);
+        }
+
+        .result-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+        }
+
+        .result-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 0.25rem;
+        }
+
+        .result-value.small {
+            font-size: 1.2rem;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .scenario-card {
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .scenario-card.conservative {
+            border-color: var(--warning);
+            background: #fffbeb;
+        }
+
+        .scenario-card.base {
+            border-color: var(--secondary);
+            background: #ebf8ff;
+        }
+
+        .scenario-card.aggressive {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .scenario-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scenario-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .scenario-psf {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: var(--border);
+            margin: 2rem 0;
+            border-radius: 1px;
+        }
+
+        .cashflow-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .cashflow-table th, .cashflow-table td {
+            padding: 0.6rem 0.8rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cashflow-table th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            position: sticky;
+            top: 0;
+        }
+
+        .cashflow-table th:first-child {
+            text-align: left;
+        }
+
+        .cashflow-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .cashflow-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .cashflow-table .positive {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .cashflow-table .negative {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-top: 1rem;
+        }
+
+        .explanation-box {
+            background: #fffaf0;
+            border: 1px solid #fbd38d;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .explanation-box h3 {
+            color: #c05621;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .explanation-box ul {
+            margin-left: 1.25rem;
+        }
+
+        .explanation-box li {
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-box {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 0.75rem 0;
+            overflow-x: auto;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--secondary);
+            background: #ebf8ff;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .op-cost-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 0.75rem;
+            align-items: end;
+            margin-bottom: 0.5rem;
+        }
+
+        .op-cost-row input {
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .op-cost-list {
+            margin-top: 1rem;
+        }
+
+        .add-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .remove-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .summary-item .label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .summary-item .value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 0.25rem;
+        }
+
+        .pdf-section {
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            .btn-group, .tabs { display: none !important; }
+            .card { break-inside: avoid; }
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .toggle-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--secondary);
+        }
+
+        .lease-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .rate-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+
+        .rate-badge.good { background: #c6f6d5; color: #22543d; }
+        .rate-badge.ok { background: #fefcbf; color: #744210; }
+        .rate-badge.poor { background: #fed7d7; color: #742a2a; }
+    </style>
 <base target="_blank">
 </head>
 <body>
-<div class="container">
-    <header>
-        <h1>🏗️ Dormitory Land Tender Price Calculator</h1>
-        <p>Comprehensive financial modeling for Singapore dormitory developments with IRAS-compliant tax calculations, dual-loan structuring, and leasehold cashflow analysis. Leasehold property returns to government at $0 value.</p>
-    </header>
-
-    <div style="text-align: right; margin: 10px 0;">
-        <button class="btn" onclick="window.print()" style="background: #4a5568;">
-            <span>🖨️</span> Print / Save as PDF
-        </button>
+    <div class="header">
+        <h1>🏗️ Dormitory Land Tender Calculator</h1>
+        <p>Residual Land Value Approach — Comprehensive Tender Analysis & Cashflow Model</p>
     </div>
 
-    <div class="grid">
-        <div class="card">
-            <h2><span class="icon">📐</span> Land & Development Parameters</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Land Size (sqm)</label>
-                    <input type="number" id="landSize" value="10000" min="100">
-                    <div class="hint">Gross site area in square metres</div>
+    <div class="container">
+        <div class="grid">
+            <!-- LEFT COLUMN: INPUTS -->
+            <div>
+                <!-- LAND INPUTS -->
+                <div class="card pdf-section">
+                    <h2><span class="icon">🌍</span> Land Parameters</h2>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Land Size (sqft)</label>
+                            <div class="hint">Gross site area in square feet</div>
+                            <input type="number" id="landSize" value="100000" min="0" step="1000">
+                        </div>
+                        <div class="input-group">
+                            <label>Plot Ratio (GPR)</label>
+                            <div class="hint">Gross Plot Ratio (e.g., 2.8)</div>
+                            <input type="number" id="plotRatio" value="2.8" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Leasehold Period (years)</label>
+                            <div class="hint">Typically 30-99 years for dormitory</div>
+                            <input type="number" id="leasePeriod" value="60" min="1" max="99">
+                        </div>
+                        <div class="input-group">
+                            <label>Efficiency Ratio (%)</label>
+                            <div class="hint">Net lettable / gross floor area</div>
+                            <input type="number" id="efficiency" value="85" min="0" max="100">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Plot Ratio</label>
-                    <input type="number" id="plotRatio" value="2.8" step="0.1" min="0.1">
-                    <div class="hint">URA allowable plot ratio</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Leasehold Period (months)</label>
-                    <input type="number" id="leasehold" value="720" min="1">
-                    <div class="hint">Total leasehold tenure in months (e.g. 720 = 60 years)</div>
-                </div>
-                <div class="form-group">
-                    <label>Number of Pax (beds)</label>
-                    <input type="number" id="numPax" value="1500" min="1">
-                    <div class="hint">Total dormitory capacity</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Expected Occupancy (%)</label>
-                    <input type="number" id="occupancy" value="85" min="0" max="100">
-                    <div class="hint">Average annual occupancy rate</div>
-                </div>
-                <div class="form-group">
-                    <label>Rental Rate per Pax/Month (S$)</label>
-                    <input type="number" id="rentalRate" value="450" min="1">
-                    <div class="hint">Monthly rental per bed space</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="card">
-            <h2><span class="icon">🏗️</span> Construction & Cost Parameters</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Construction Cost per sqm (S$)</label>
-                    <input type="number" id="constructionCost" value="2800" min="1">
-                    <div class="hint">Typical dormitory: S$2,500–3,200/sqm</div>
+                <!-- REVENUE INPUTS -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">💰</span> Revenue Assumptions</h2>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Number of Pax (Beds)</label>
+                            <div class="hint">Total dormitory capacity</div>
+                            <input type="number" id="numPax" value="1500" min="0" step="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Monthly Rental per Pax ($)</label>
+                            <div class="hint">Average rent per bed per month</div>
+                            <input type="number" id="rentalRate" value="450" min="0" step="10">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Vacancy Rate (%)</label>
+                            <div class="hint">Expected average vacancy</div>
+                            <input type="number" id="vacancyRate" value="10" min="0" max="100">
+                        </div>
+                        <div class="input-group">
+                            <label>Rental Escalation (%/yr)</label>
+                            <div class="hint">Annual rental growth rate</div>
+                            <input type="number" id="rentalEscalation" value="2.5" min="0" step="0.5">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Construction Period (months)</label>
-                    <input type="number" id="constructionPeriod" value="24" min="1">
-                    <div class="hint">From groundbreaking to TOP. NO rental income during this period.</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Professional Fees (% of construction)</label>
-                    <input type="number" id="profFees" value="8" min="0" max="100">
-                    <div class="hint">Architect, M&E, QS fees</div>
-                </div>
-                <div class="form-group">
-                    <label>Contingency (% of construction)</label>
-                    <input type="number" id="contingency" value="5" min="0" max="100">
-                    <div class="hint">Buffer for cost overruns</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Other Development Costs (S$)</label>
-                    <input type="number" id="otherDevCosts" value="500000" min="0">
-                    <div class="hint">DC, legal, marketing, preliminaries</div>
-                </div>
-                <div class="form-group">
-                    <label>Equity / Shareholder Capital (S$)</label>
-                    <input type="number" id="equity" value="5000000" min="0">
-                    <div class="hint">Initial equity injection</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="grid">
-        <div class="card">
-            <h2><span class="icon">🏦</span> Land Loan</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>LTV Ratio (%)</label>
-                    <input type="number" id="landLTV" value="60" min="0" max="100">
-                    <div class="hint">Loan-to-value for land acquisition</div>
+                <!-- CONSTRUCTION COST -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">🏗️</span> Development Cost</h2>
+                    <div class="input-group">
+                        <label>Lumpsum Construction Cost ($)</label>
+                        <div class="hint">Total construction cost (lumpsum basis)</div>
+                        <input type="number" id="constructionCost" value="45000000" min="0" step="1000000">
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Construction Cost per GFA sqft</div>
+                        <div class="result-value small" id="constructionCostPSF">$0</div>
+                    </div>
+                    <div class="input-row" style="margin-top: 1rem;">
+                        <div class="input-group">
+                            <label>Professional Fees (%)</label>
+                            <div class="hint">Architect, engineer, QS fees</div>
+                            <input type="number" id="profFees" value="8" min="0" max="30">
+                        </div>
+                        <div class="input-group">
+                            <label>Contingency (%)</label>
+                            <div class="hint">Construction contingency</div>
+                            <input type="number" id="contingency" value="5" min="0" max="30">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Development Period (months)</label>
+                            <div class="hint">From land acquisition to TOP</div>
+                            <input type="number" id="devPeriod" value="36" min="6" max="60">
+                        </div>
+                        <div class="input-group">
+                            <label>Marketing & Leasing ($)</label>
+                            <div class="hint">Pre-opening marketing costs</div>
+                            <input type="number" id="marketingCost" value="500000" min="0" step="50000">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Interest Rate (% p.a.)</label>
-                    <input type="number" id="landRate" value="4.5" step="0.1" min="0">
-                    <div class="hint">Current SIBOR + spread</div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Repayment Period (months)</label>
-                <input type="number" id="landTenor" value="240" min="1">
-                <div class="hint">Total loan tenor in months</div>
-            </div>
-        </div>
 
-        <div class="card">
-            <h2><span class="icon">🏗️</span> Construction Loan</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>LTV Ratio (%)</label>
-                    <input type="number" id="constructionLTV" value="70" min="0" max="100">
-                    <div class="hint">Loan-to-cost for construction</div>
-                </div>
-                <div class="form-group">
-                    <label>Interest Rate (% p.a.)</label>
-                    <input type="number" id="constructionRate" value="5.0" step="0.1" min="0">
-                    <div class="hint">Typically higher than land loan</div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Repayment Period (months)</label>
-                <input type="number" id="constructionTenor" value="180" min="1">
-                <div class="hint">Total loan tenor in months</div>
-            </div>
-        </div>
-    </div>
+                <!-- FINANCING -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">🏦</span> Financing Structure</h2>
 
-    <div class="grid">
-        <div class="card">
-            <h2><span class="icon">⚙️</span> Operational Parameters</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Monthly OpEx per Pax (S$)</label>
-                    <input type="number" id="opexPerPax" value="85" min="0">
-                    <div class="hint">Utilities, cleaning, security, maintenance</div>
-                </div>
-                <div class="form-group">
-                    <label>Fixed Monthly OpEx (S$)</label>
-                    <input type="number" id="fixedOpex" value="15000" min="0">
-                    <div class="hint">Management, insurance, admin</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Annual Rent Escalation (%)</label>
-                    <input type="number" id="rentEscalation" value="2.5" step="0.1" min="0">
-                    <div class="hint">Year-on-year rental growth</div>
-                </div>
-                <div class="form-group">
-                    <label>Annual OpEx Escalation (%)</label>
-                    <input type="number" id="opexEscalation" value="2.0" step="0.1" min="0">
-                    <div class="hint">Year-on-year cost growth</div>
-                </div>
-            </div>
-        </div>
+                    <h3 style="font-size: 1rem; color: var(--secondary); margin: 1rem 0 0.5rem;">Land Loan</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Land Loan Amount ($)</label>
+                            <input type="number" id="landLoanAmt" value="25000000" min="0" step="1000000">
+                        </div>
+                        <div class="input-group">
+                            <label>Interest Rate (% p.a.)</label>
+                            <input type="number" id="landLoanRate" value="4.5" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Land Loan Tenor (years)</label>
+                        <input type="number" id="landLoanTenor" value="20" min="1" max="30">
+                    </div>
 
-        <div class="card">
-            <h2><span class="icon">💰</span> Financing & Returns</h2>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Shareholder Loan Interest (%)</label>
-                    <input type="number" id="shLoanRate" value="6.0" step="0.1" min="0">
-                    <div class="hint">If applicable, otherwise 0</div>
-                </div>
-                <div class="form-group">
-                    <label>Shareholder Loan Amount (S$)</label>
-                    <input type="number" id="shLoanAmount" value="0" min="0">
-                    <div class="hint">Subordinated shareholder financing</div>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="form-group">
-                    <label>Target IRR (%)</label>
-                    <input type="number" id="targetIRR" value="12" step="0.5" min="0">
-                    <div class="hint">Minimum acceptable project IRR</div>
-                </div>
-                <div class="form-group">
-                    <label>Exit Cap Rate (%)</label>
-                    <input type="number" id="exitCapRate" value="6.5" step="0.1" min="0">
-                    <div class="hint">For terminal value estimation (not used for leasehold)</div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <h3 style="font-size: 1rem; color: var(--secondary); margin: 1.5rem 0 0.5rem;">Construction Loan</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Construction Loan ($)</label>
+                            <input type="number" id="conLoanAmt" value="35000000" min="0" step="1000000">
+                        </div>
+                        <div class="input-group">
+                            <label>Interest Rate (% p.a.)</label>
+                            <input type="number" id="conLoanRate" value="5.0" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Construction Loan Tenor (years)</label>
+                        <input type="number" id="conLoanTenor" value="15" min="1" max="25">
+                    </div>
 
-    <div class="card" style="margin-bottom: 25px;">
-        <h2><span class="icon">📊</span> Scenario Selection</h2>
-        <div class="scenario-selector">
-            <button class="scenario-btn active" data-scenario="medium" onclick="setScenario('medium')">Medium Case</button>
-            <button class="scenario-btn" data-scenario="conservative" onclick="setScenario('conservative')">Conservative</button>
-            <button class="scenario-btn" data-scenario="aggressive" onclick="setScenario('aggressive')">Aggressive</button>
-        </div>
-        <div class="highlight-box" id="scenarioDesc">
-            <strong>Medium Case:</strong> Base assumptions with moderate occupancy (85%), stable rental growth (2.5% p.a.), and standard construction costs. This represents the most probable outcome.
-        </div>
-        <button class="btn btn-block" onclick="calculateAll()">
-            <span>🚀</span> Calculate Tender Price & Cashflow Model
-        </button>
-    </div>
-
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Crunching numbers and building your financial model...</p>
-    </div>
-
-    <div class="results-section" id="results">
-
-        <h2 class="section-title">🎯 Tender Price Recommendation</h2>
-        <div class="price-cards">
-            <div class="price-card aggressive">
-                <div class="label">Aggressive</div>
-                <div class="amount" id="conPrice">-</div>
-                <div class="per-psf" id="conPsf">-</div>
-                <div class="reasoning">
-                    <strong>Why you SHOULD bid this:</strong>
-                    <ul>
-                        <li>Maximum downside protection</li>
-                        <li>Higher probability of winning tender</li>
-                        <li>Buffer against construction delays</li>
-                        <li>Accommodates lower occupancy (75%)</li>
-                    </ul>
-                    <strong>Why you should NOT:</strong>
-                    <ul>
-                        <li>May miss out if competition is fierce</li>
-                        <li>Leaves money on the table</li>
-                        <li>Lower absolute returns</li>
-                    </ul>
+                    <h3 style="font-size: 1rem; color: var(--secondary); margin: 1.5rem 0 0.5rem;">Equity & Returns</h3>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Required Equity IRR (%)</label>
+                            <div class="hint">Minimum acceptable return on equity</div>
+                            <input type="number" id="equityIRR" value="12" min="0" step="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label>Target Developer Margin (%)</label>
+                            <div class="hint">Profit margin on development cost</div>
+                            <input type="number" id="devMargin" value="15" min="0" max="50">
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="price-card medium">
-                <div class="label">Medium (Recommended)</div>
-                <div class="amount" id="medPrice">-</div>
-                <div class="per-psf" id="medPsf">-</div>
-                <div class="reasoning">
-                    <strong>Why you SHOULD bid this:</strong>
-                    <ul>
-                        <li>Balanced risk-return profile</li>
-                        <li>Aligns with market comparables</li>
-                        <li>Achieves target IRR under base case</li>
-                        <li>Competitive yet prudent</li>
-                    </ul>
-                    <strong>Why you should NOT:</strong>
-                    <ul>
-                        <li>Still exposed to market downturns</li>
-                        <li>Requires disciplined cost control</li>
-                        <li>Sensitive to interest rate rises</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="price-card conservative">
-                <div class="label">Conservative</div>
-                <div class="amount" id="aggPrice">-</div>
-                <div class="per-psf" id="aggPsf">-</div>
-                <div class="reasoning">
-                    <strong>Why you SHOULD bid this:</strong>
-                    <ul>
-                        <li>Highest absolute profit potential</li>
-                        <li>Strong if market rents outperform</li>
-                        <li>Maximises land value capture</li>
-                    </ul>
-                    <strong>Why you should NOT:</strong>
-                    <ul>
-                        <li>High risk of negative cashflow</li>
-                        <li>Minimal margin for error</li>
-                        <li>Requires 95%+ sustained occupancy</li>
-                        <li>Vulnerable to policy changes</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
 
-        <div class="highlight-box">
-            <strong>📌 Key Insight:</strong> The medium price is derived by working backwards from your target IRR, factoring in construction costs, financing costs, operational cashflows over the leasehold period, and Singapore's property tax regime. <strong>At lease expiry, the property returns to the government at $0 value.</strong> The conservative and aggressive prices represent ±15% deviations in key assumptions.
-        </div>
+                <!-- OPERATIONAL COSTS -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">⚙️</span> Annual Operational Costs</h2>
+                    <div class="hint" style="margin-bottom: 1rem; color: var(--text-light);">Add recurring yearly operational expenses. These will be applied across the leasehold period in the cashflow model.</div>
 
-        <h2 class="section-title">📋 Development Summary</h2>
-        <div class="summary-grid">
-            <div class="summary-item">
-                <div class="value" id="gfa">-</div>
-                <div class="label">Gross Floor Area (sqm)</div>
-            </div>
-            <div class="summary-item">
-                <div class="value" id="totalDevCost">-</div>
-                <div class="label">Total Development Cost</div>
-            </div>
-            <div class="summary-item">
-                <div class="value" id="annualRevenue">-</div>
-                <div class="label">Stabilised Annual Revenue</div>
-            </div>
-            <div class="summary-item">
-                <div class="value" id="projectIRR">-</div>
-                <div class="label">Project IRR (Medium)</div>
-            </div>
-        </div>
+                    <div id="opCostList" class="op-cost-list">
+                        <!-- populated by JS -->
+                    </div>
 
-        <h2 class="section-title">📈 Leasehold Cashflow Model</h2>
-        <div class="card">
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('annual')">Annual Cashflow</button>
-                <button class="tab-btn" onclick="switchTab('loan')">Loan Amortisation</button>
-                <button class="tab-btn" onclick="switchTab('tax')">Tax Detail</button>
-                <button class="tab-btn" onclick="switchTab('chart')">Charts</button>
-            </div>
+                    <button class="add-btn" onclick="addOpCost()">+ Add Cost Item</button>
 
-            <div class="tab-panel active" id="panel-annual">
-                <div class="tax-note">
-                    <strong>Singapore IRAS Property Tax Context:</strong> Dormitories are taxed at 10% of Annual Value (AV) for non-residential properties. AV is estimated at 5% of gross rental income. Property tax is deductible for income tax purposes. Income tax rate for companies is 17%. <strong>Leasehold property returns to government at $0 at expiry.</strong>
-                </div>
-                <div class="table-wrap">
-                    <table id="cashflowTable">
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Gross Rental</th>
-                                <th>Vacancy Loss</th>
-                                <th>Net Rental</th>
-                                <th>OpEx</th>
-                                <th>EBITDA</th>
-                                <th>Prop. Tax</th>
-                                <th>Interest</th>
-                                <th>Depreciation</th>
-                                <th>Taxable Inc.</th>
-                                <th>Income Tax</th>
-                                <th>Principal</th>
-                                <th>SH Loan</th>
-                                <th>Net Cashflow</th>
-                                <th>Cumulative</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                    <div class="result-box" style="margin-top: 1rem;">
+                        <div class="result-label">Total Annual Operating Cost</div>
+                        <div class="result-value small" id="totalOpCost">$0</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="tab-panel" id="panel-loan">
-                <div class="table-wrap">
-                    <table id="loanTable">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Land Loan Bal.</th>
-                                <th>Land Payment</th>
-                                <th>Land Interest</th>
-                                <th>Land Principal</th>
-                                <th>Const. Loan Bal.</th>
-                                <th>Const. Payment</th>
-                                <th>Const. Interest</th>
-                                <th>Const. Principal</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+            <!-- RIGHT COLUMN: RESULTS -->
+            <div>
+                <!-- TENDER PRICE RESULTS -->
+                <div class="card pdf-section">
+                    <h2><span class="icon">🎯</span> Tender Price Recommendation</h2>
 
-            <div class="tab-panel" id="panel-tax">
-                <div class="tax-note">
-                    <strong>IRAS Tax Treatment for Dormitories:</strong><br>
-                    • <strong>Property Tax:</strong> 10% of Annual Value (AV). AV for dormitories estimated at 5% of gross annual rent (non-residential rate).<br>
-                    • <strong>Income Tax:</strong> 17% corporate tax rate on chargeable income after deducting allowable expenses (interest, OpEx, property tax, depreciation).<br>
-                    • <strong>Depreciation:</strong> Straight-line over leasehold period or 25 years (building), whichever is shorter. No capital allowances for land.<br>
-                    • <strong>Leasehold:</strong> Property returns to government at $0 value at expiry. No terminal value.
-                </div>
-                <div class="table-wrap">
-                    <table id="taxTable">
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Gross Income</th>
-                                <th>Allowable Deductions</th>
-                                <th>Taxable Income</th>
-                                <th>Income Tax @17%</th>
-                                <th>Property Tax @10% AV</th>
-                                <th>Total Tax</th>
-                                <th>Effective Tax Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+                    <div class="scenario-grid">
+                        <div class="scenario-card conservative">
+                            <div class="scenario-title">🛡️ Conservative</div>
+                            <div class="scenario-value" id="conservativePrice">$0</div>
+                            <div class="scenario-psf" id="conservativePSF">$0 / psf ppr</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">
+                                Higher vacancy, lower escalation, +10% contingency
+                            </div>
+                        </div>
+                        <div class="scenario-card base">
+                            <div class="scenario-title">⚖️ Base Case</div>
+                            <div class="scenario-value" id="basePrice">$0</div>
+                            <div class="scenario-psf" id="basePSF">$0 / psf ppr</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">
+                                Your input assumptions
+                            </div>
+                        </div>
+                        <div class="scenario-card aggressive">
+                            <div class="scenario-title">🚀 Aggressive</div>
+                            <div class="scenario-value" id="aggressivePrice">$0</div>
+                            <div class="scenario-psf" id="aggressivePSF">$0 / psf ppr</div>
+                            <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">
+                                Lower vacancy, higher escalation, -5% contingency
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="tab-panel" id="panel-chart">
-                <div class="chart-container">
-                    <canvas id="cashflowChart"></canvas>
+                    <div class="explanation-box">
+                        <h3>📊 Why This Price?</h3>
+                        <p style="margin-bottom: 0.75rem; font-size: 0.9rem;">The <strong>Residual Land Value</strong> method calculates the maximum land price you can pay while still achieving your target returns. It works backwards from projected revenue:</p>
+                        <div class="formula-box">
+Land Value = Gross Development Value (GDV)
+            − Total Development Cost
+            − Developer Profit Margin
+            − Financing Costs
+                        </div>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>GDV</strong>: Present value of all future rental income over the leasehold period</li>
+                            <li><strong>Dev Cost</strong>: Construction + fees + contingency + marketing</li>
+                            <li><strong>Profit Margin</strong>: Your required developer margin on total cost</li>
+                            <li><strong>Financing</strong>: Interest on land & construction loans during development</li>
+                        </ul>
+                        <p style="margin-top: 0.75rem; font-size: 0.9rem; color: #744210;"><strong>💡 Tender Strategy:</strong> The Base Case gives you a competitive bid that meets your IRR target. Use the Conservative case as your walk-away price, and the Aggressive case only if you have high conviction on occupancy and rental growth.</p>
+                    </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="loanChart"></canvas>
-                </div>
-            </div>
-        </div>
 
-        <h2 class="section-title">💎 Final Profitability Analysis</h2>
-        <div class="card">
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <div class="value" id="totalRevenue">-</div>
-                    <div class="label">Total Revenue (Leasehold)</div>
+                <!-- KEY METRICS -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">📈</span> Key Development Metrics</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="label">Gross Floor Area</div>
+                            <div class="value" id="gfaDisplay">0 sqft</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Net Lettable Area</div>
+                            <div class="value" id="nlaDisplay">0 sqft</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Total Dev Cost</div>
+                            <div class="value" id="totalDevCost">$0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">GDV (NPV)</div>
+                            <div class="value" id="gdvDisplay">$0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Equity Required</div>
+                            <div class="value" id="equityRequired">$0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Project IRR</div>
+                            <div class="value" id="projectIRR">0%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Equity IRR</div>
+                            <div class="value" id="equityIRRDisplay">0%</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="label">Yield on Cost</div>
+                            <div class="value" id="yieldOnCost">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="result-box" id="recommendationBox" style="margin-top: 1rem;">
+                        <div class="result-label">Recommendation</div>
+                        <div id="recommendationText" style="margin-top: 0.5rem; font-size: 0.95rem;"></div>
+                    </div>
                 </div>
-                <div class="summary-item">
-                    <div class="value" id="totalOpex">-</div>
-                    <div class="label">Total OpEx & Costs</div>
+
+                <!-- CASHFLOW MODEL -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">📋</span> Cashflow Model</h2>
+
+                    <div class="tabs">
+                        <div class="tab active" onclick="switchTab('table')">📊 Table</div>
+                        <div class="tab" onclick="switchTab('chart')">📈 Chart</div>
+                    </div>
+
+                    <div id="tableTab" class="tab-content active">
+                        <div class="table-container">
+                            <table class="cashflow-table" id="cashflowTable">
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>Gross Rental</th>
+                                        <th>Vacancy Loss</th>
+                                        <th>Net Rental</th>
+                                        <th>OpEx</th>
+                                        <th>NOI</th>
+                                        <th>Land Debt Svc</th>
+                                        <th>Con Debt Svc</th>
+                                        <th>Net Cashflow</th>
+                                        <th>Cumulative</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cashflowBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="chartTab" class="tab-content">
+                        <div class="chart-container">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div class="summary-item">
-                    <div class="value" id="totalInterest">-</div>
-                    <div class="label">Total Interest Paid</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value" id="totalTax">-</div>
-                    <div class="label">Total Tax Paid</div>
-                </div>
-            </div>
-            <div class="final-profit">
-                <div class="label">NET PROFIT OVER LEASEHOLD (Medium Case)</div>
-                <div class="amount" id="finalProfit">-</div>
-                <div class="sub" id="finalProfitSub">-</div>
-            </div>
-            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                <div class="summary-item">
-                    <div class="value" id="npv">-</div>
-                    <div class="label">NPV @ Target IRR</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value" id="equityIRR">-</div>
-                    <div class="label">Equity IRR</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value" id="cashMultiple">-</div>
-                    <div class="label">Cash-on-Cash Multiple</div>
+
+                <!-- EXPORT -->
+                <div class="card pdf-section" style="margin-top: 1.5rem;">
+                    <h2><span class="icon">📄</span> Export Report</h2>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem;">Generate a comprehensive PDF report with all calculations, assumptions, and cashflow projections for your tender submission.</p>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="generatePDF()">
+                            📄 Export to PDF
+                        </button>
+                        <button class="btn btn-success" onclick="exportCSV()">
+                            📊 Export Cashflow CSV
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<script>
-let currentScenario = 'medium';
-let cashflowData = [];
-let chartInstances = {};
 
-function setScenario(scenario) {
-    currentScenario = scenario;
-    document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[data-scenario="${scenario}"]`).classList.add('active');
+    <script>
+        // Default operational costs
+        let opCosts = [
+            { name: "Property Management", amount: 180000, escalate: true },
+            { name: "Utilities & Maintenance", amount: 240000, escalate: true },
+            { name: "Insurance", amount: 60000, escalate: true },
+            { name: "Property Tax", amount: 120000, escalate: true },
+            { name: "Security & Cleaning", amount: 150000, escalate: true },
+            { name: "Admin & Miscellaneous", amount: 80000, escalate: true }
+        ];
 
-    const descs = {
-        conservative: '<strong>Conservative Case:</strong> Assumes 75% occupancy, 1.5% rental growth, 10% construction cost overrun buffer, and 50bps higher interest rates. Use this for risk-averse bidding or when market uncertainty is high.',
-        medium: '<strong>Medium Case:</strong> Base assumptions with moderate occupancy (85%), stable rental growth (2.5% p.a.), and standard construction costs. This represents the most probable outcome.',
-        aggressive: '<strong>Aggressive Case:</strong> Assumes 95% occupancy, 3.5% rental growth, no cost overruns, and potential for rent premium. Use only if you have strong operational track record and market conviction.'
-    };
-    document.getElementById('scenarioDesc').innerHTML = descs[scenario];
-}
+        let cashflowChart = null;
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
-    document.getElementById('panel-' + tab).classList.add('active');
-
-    if (tab === 'chart' && cashflowData.length > 0) {
-        setTimeout(renderCharts, 50);
-    }
-}
-
-function formatCurrency(num) {
-    if (num === undefined || num === null) return '-';
-    if (Math.abs(num) >= 1e9) return 'S$' + (num / 1e9).toFixed(2) + 'B';
-    if (Math.abs(num) >= 1e6) return 'S$' + (num / 1e6).toFixed(2) + 'M';
-    if (Math.abs(num) >= 1e3) return 'S$' + (num / 1e3).toFixed(1) + 'K';
-    return 'S$' + num.toFixed(0);
-}
-
-function formatNumber(num) {
-    return num.toLocaleString('en-SG', { maximumFractionDigits: 0 });
-}
-
-function getInputs() {
-    const get = id => parseFloat(document.getElementById(id).value) || 0;
-    return {
-        landSize: get('landSize'),
-        plotRatio: get('plotRatio'),
-        leaseholdMonths: get('leasehold'),
-        numPax: get('numPax'),
-        occupancy: get('occupancy') / 100,
-        rentalRate: get('rentalRate'),
-        constructionCost: get('constructionCost'),
-        constructionPeriod: get('constructionPeriod'),
-        profFees: get('profFees') / 100,
-        contingency: get('contingency') / 100,
-        otherDevCosts: get('otherDevCosts'),
-        equity: get('equity'),
-        landLTV: get('landLTV') / 100,
-        landRate: get('landRate') / 100,
-        landTenor: get('landTenor'),
-        constructionLTV: get('constructionLTV') / 100,
-        constructionRate: get('constructionRate') / 100,
-        constructionTenor: get('constructionTenor'),
-        opexPerPax: get('opexPerPax'),
-        fixedOpex: get('fixedOpex'),
-        rentEscalation: get('rentEscalation') / 100,
-        opexEscalation: get('opexEscalation') / 100,
-        shLoanRate: get('shLoanRate') / 100,
-        shLoanAmount: get('shLoanAmount'),
-        targetIRR: get('targetIRR') / 100,
-        exitCapRate: get('exitCapRate') / 100
-    };
-}
-
-function applyScenario(inputs, scenario) {
-    const i = { ...inputs };
-    if (scenario === 'conservative') {
-        i.occupancy = Math.max(0.70, i.occupancy - 0.10);
-        i.rentEscalation = Math.max(0, i.rentEscalation - 0.01);
-        i.constructionCost *= 1.08;
-        i.landRate += 0.005;
-        i.constructionRate += 0.005;
-        i.opexPerPax *= 1.05;
-    } else if (scenario === 'aggressive') {
-        i.occupancy = Math.min(0.98, i.occupancy + 0.10);
-        i.rentEscalation += 0.01;
-        i.constructionCost *= 0.95;
-        i.rentalRate *= 1.05;
-        i.opexPerPax *= 0.95;
-    }
-    return i;
-}
-
-function calculateLoanSchedule(principal, annualRate, totalMonths, startMonth = 0) {
-    const monthlyRate = annualRate / 12;
-    let monthlyPayment = 0;
-    if (monthlyRate > 0) {
-        monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-    } else {
-        monthlyPayment = principal / totalMonths;
-    }
-    const schedule = [];
-    let balance = principal;
-
-    for (let m = 1; m <= totalMonths; m++) {
-        const interest = balance * monthlyRate;
-        const principalPaid = monthlyPayment - interest;
-        balance = Math.max(0, balance - principalPaid);
-        schedule.push({
-            month: startMonth + m,
-            payment: monthlyPayment,
-            interest: interest,
-            principal: principalPaid,
-            balance: balance
-        });
-    }
-    return schedule;
-}
-
-function calculateAll() {
-    document.getElementById('loading').classList.add('active');
-    document.getElementById('results').classList.remove('active');
-
-    setTimeout(() => {
-        const baseInputs = getInputs();
-
-        // Calculate for all three scenarios
-        const scenarios = {};
-        ['conservative', 'medium', 'aggressive'].forEach(scen => {
-            const inputs = applyScenario(baseInputs, scen);
-            scenarios[scen] = calculateScenario(inputs, scen);
-        });
-
-        // Use medium case for cashflow display
-        cashflowData = scenarios.medium;
-
-        displayPrices(scenarios, baseInputs);
-        displaySummary(scenarios.medium, baseInputs);
-        displayCashflow(scenarios.medium);
-        displayLoanSchedule(scenarios.medium);
-        displayTaxDetail(scenarios.medium);
-        displayFinalProfit(scenarios.medium, baseInputs);
-
-        document.getElementById('loading').classList.remove('active');
-        document.getElementById('results').classList.add('active');
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-    }, 800);
-}
-
-function calculateScenario(inputs, scenarioName) {
-    const gfa = inputs.landSize * inputs.plotRatio;
-    const constructionCostTotal = gfa * inputs.constructionCost;
-    const profFees = constructionCostTotal * inputs.profFees;
-    const contingency = constructionCostTotal * inputs.contingency;
-    const totalConstruction = constructionCostTotal + profFees + contingency + inputs.otherDevCosts;
-
-    // Solve for land price that gives target IRR
-    const landPrice = solveLandPrice(inputs, totalConstruction, gfa);
-
-    const landLoan = landPrice * inputs.landLTV;
-    const constructionLoan = totalConstruction * inputs.constructionLTV;
-    const totalLoan = landLoan + constructionLoan;
-    const totalEquity = landPrice + totalConstruction - totalLoan;
-
-    // Loan schedules
-    const landSchedule = calculateLoanSchedule(landLoan, inputs.landRate, inputs.landTenor);
-    const constructionSchedule = calculateLoanSchedule(constructionLoan, inputs.constructionRate, inputs.constructionTenor);
-
-    // Monthly cashflow model
-    const totalMonths = inputs.leaseholdMonths;
-    const constructionMonths = inputs.constructionPeriod;
-    const operatingMonths = totalMonths - constructionMonths;
-    const operatingYears = Math.ceil(operatingMonths / 12);
-
-    const monthlyData = [];
-    let cumulativeCF = -(totalEquity + inputs.equity);
-
-    const buildingValue = constructionCostTotal + profFees + contingency;
-    const annualDepreciation = buildingValue / Math.min(operatingYears, 25);
-
-    // Loan tracking
-    let landLoanBalance = landLoan;
-    let constLoanBalance = constructionLoan;
-    const landMonthlyRate = inputs.landRate / 12;
-    const constMonthlyRate = inputs.constructionRate / 12;
-
-    // Monthly payments
-    let landMonthlyPayment = 0;
-    if (landMonthlyRate > 0) {
-        landMonthlyPayment = landLoan * (landMonthlyRate * Math.pow(1 + landMonthlyRate, inputs.landTenor)) / (Math.pow(1 + landMonthlyRate, inputs.landTenor) - 1);
-    } else {
-        landMonthlyPayment = landLoan / inputs.landTenor;
-    }
-
-    let constMonthlyPayment = 0;
-    if (constMonthlyRate > 0) {
-        constMonthlyPayment = constructionLoan * (constMonthlyRate * Math.pow(1 + constMonthlyRate, inputs.constructionTenor)) / (Math.pow(1 + constMonthlyRate, inputs.constructionTenor) - 1);
-    } else {
-        constMonthlyPayment = constructionLoan / inputs.constructionTenor;
-    }
-
-    for (let m = 1; m <= totalMonths; m++) {
-        const isConstruction = m <= constructionMonths;
-        const operatingMonth = m - constructionMonths;
-        const yearNum = Math.ceil(operatingMonth / 12);
-
-        // Rental income (only during operating period)
-        let grossRental = 0, vacancyLoss = 0, netRental = 0;
-        if (!isConstruction) {
-            const currentRent = inputs.rentalRate * Math.pow(1 + inputs.rentEscalation, yearNum - 1);
-            grossRental = inputs.numPax * currentRent;
-            vacancyLoss = grossRental * (1 - inputs.occupancy);
-            netRental = grossRental - vacancyLoss;
+        function formatCurrency(num) {
+            if (num >= 1000000) return '$' + (num / 1000000).toFixed(2) + 'M';
+            if (num >= 1000) return '$' + (num / 1000).toFixed(1) + 'K';
+            return '$' + num.toFixed(0);
         }
 
-        // OpEx (only during operating period)
-        let totalOpex = 0;
-        if (!isConstruction) {
-            const currentOpexPerPax = inputs.opexPerPax * Math.pow(1 + inputs.opexEscalation, yearNum - 1);
-            const variableOpex = inputs.numPax * currentOpexPerPax;
-            const fixedOpex = inputs.fixedOpex * Math.pow(1 + inputs.opexEscalation, yearNum - 1);
-            totalOpex = variableOpex + fixedOpex;
+        function formatNumber(num) {
+            return num.toLocaleString('en-US');
         }
 
-        const ebitda = netRental - totalOpex;
-
-        // Property Tax (only during operating period)
-        let propertyTax = 0;
-        if (!isConstruction) {
-            const annualValue = grossRental * 12 * 0.05;
-            propertyTax = (annualValue / 12) * 0.10;
+        function getInputs() {
+            return {
+                landSize: parseFloat(document.getElementById('landSize').value) || 0,
+                plotRatio: parseFloat(document.getElementById('plotRatio').value) || 0,
+                leasePeriod: parseInt(document.getElementById('leasePeriod').value) || 0,
+                efficiency: parseFloat(document.getElementById('efficiency').value) || 0,
+                numPax: parseInt(document.getElementById('numPax').value) || 0,
+                rentalRate: parseFloat(document.getElementById('rentalRate').value) || 0,
+                vacancyRate: parseFloat(document.getElementById('vacancyRate').value) || 0,
+                rentalEscalation: parseFloat(document.getElementById('rentalEscalation').value) || 0,
+                constructionCost: parseFloat(document.getElementById('constructionCost').value) || 0,
+                profFees: parseFloat(document.getElementById('profFees').value) || 0,
+                contingency: parseFloat(document.getElementById('contingency').value) || 0,
+                devPeriod: parseInt(document.getElementById('devPeriod').value) || 0,
+                marketingCost: parseFloat(document.getElementById('marketingCost').value) || 0,
+                landLoanAmt: parseFloat(document.getElementById('landLoanAmt').value) || 0,
+                landLoanRate: parseFloat(document.getElementById('landLoanRate').value) || 0,
+                landLoanTenor: parseInt(document.getElementById('landLoanTenor').value) || 0,
+                conLoanAmt: parseFloat(document.getElementById('conLoanAmt').value) || 0,
+                conLoanRate: parseFloat(document.getElementById('conLoanRate').value) || 0,
+                conLoanTenor: parseInt(document.getElementById('conLoanTenor').value) || 0,
+                equityIRR: parseFloat(document.getElementById('equityIRR').value) || 0,
+                devMargin: parseFloat(document.getElementById('devMargin').value) || 0
+            };
         }
 
-        // Loan interest
-        const landInterest = landLoanBalance * landMonthlyRate;
-        const constInterest = constLoanBalance * constMonthlyRate;
-        const totalInterest = landInterest + constInterest;
-
-        // Loan principal repayment
-        let landPrincipal = 0, constPrincipal = 0;
-        if (m <= inputs.landTenor && landLoanBalance > 0) {
-            landPrincipal = Math.min(landMonthlyPayment - landInterest, landLoanBalance);
-        }
-        if (m <= inputs.constructionTenor && constLoanBalance > 0) {
-            constPrincipal = Math.min(constMonthlyPayment - constInterest, constLoanBalance);
-        }
-
-        landLoanBalance = Math.max(0, landLoanBalance - landPrincipal);
-        constLoanBalance = Math.max(0, constLoanBalance - constPrincipal);
-
-        // Shareholder loan
-        const shInterest = inputs.shLoanAmount * inputs.shLoanRate / 12;
-        const shPrincipal = (m <= 120) ? inputs.shLoanAmount / 120 : 0;
-
-        // Depreciation
-        const monthlyDepreciation = (!isConstruction) ? annualDepreciation / 12 : 0;
-
-        // Taxable income
-        const taxableIncome = Math.max(0, ebitda - propertyTax - totalInterest - monthlyDepreciation - shInterest);
-        const incomeTax = taxableIncome * 0.17;
-
-        // Net cashflow - NO terminal value for leasehold
-        const netCashflow = ebitda - propertyTax - totalInterest - landPrincipal - constPrincipal - incomeTax - shInterest - shPrincipal;
-        cumulativeCF += netCashflow;
-
-        monthlyData.push({
-            month: m, isConstruction, yearNum,
-            grossRental, vacancyLoss, netRental, totalOpex, ebitda,
-            propertyTax, landInterest, constInterest, totalInterest,
-            monthlyDepreciation, taxableIncome, incomeTax,
-            landPrincipal, constPrincipal, totalPrincipal: landPrincipal + constPrincipal,
-            shInterest, shPrincipal, netCashflow, cumulativeCF,
-            landBalance: landLoanBalance, constBalance: constLoanBalance
-        });
-    }
-
-    // Aggregate to annual data
-    const annualData = [];
-    const years = Math.ceil(totalMonths / 12);
-    for (let y = 1; y <= years; y++) {
-        const yearMonths = monthlyData.filter(d => Math.ceil(d.month / 12) === y);
-        if (yearMonths.length === 0) continue;
-
-        const sum = (field) => yearMonths.reduce((s, d) => s + d[field], 0);
-        const lastMonth = yearMonths[yearMonths.length - 1];
-
-        annualData.push({
-            year: y,
-            grossRental: sum('grossRental'),
-            vacancyLoss: sum('vacancyLoss'),
-            netRental: sum('netRental'),
-            totalOpex: sum('totalOpex'),
-            ebitda: sum('ebitda'),
-            propertyTax: sum('propertyTax'),
-            landInterest: sum('landInterest'),
-            constInterest: sum('constInterest'),
-            totalInterest: sum('totalInterest'),
-            annualDepreciation: sum('monthlyDepreciation'),
-            taxableIncome: sum('taxableIncome'),
-            incomeTax: sum('incomeTax'),
-            landPrincipal: sum('landPrincipal'),
-            constPrincipal: sum('constPrincipal'),
-            totalPrincipal: sum('totalPrincipal'),
-            shInterest: sum('shInterest'),
-            shPrincipal: sum('shPrincipal'),
-            netCashflow: sum('netCashflow'),
-            cumulativeCF: lastMonth.cumulativeCF,
-            isConstruction: yearMonths.some(d => d.isConstruction),
-            isFinal: y === years
-        });
-    }
-
-    return {
-        inputs, gfa, landPrice, constructionCostTotal, profFees, contingency,
-        totalConstruction, landLoan, constructionLoan, totalEquity,
-        landSchedule, constructionSchedule, annualData, monthlyData,
-        buildingValue, annualDepreciation, operatingYears
-    };
-}
-
-function solveLandPrice(inputs, totalConstruction, gfa) {
-    // Binary search: find land price where IRR == targetIRR
-    // Higher land price -> lower IRR (more upfront cost)
-    // If IRR > target, we can afford MORE land (increase price)
-    // If IRR < target, we need LESS land (decrease price)
-
-    let low = 1;
-    let high = totalConstruction * 3;
-    let bestPrice = high;
-
-    for (let iter = 0; iter < 80; iter++) {
-        const mid = (low + high) / 2;
-        const irr = calculateIRR(inputs, mid, totalConstruction);
-
-        if (irr >= inputs.targetIRR) {
-            bestPrice = mid;
-            low = mid;
-        } else {
-            high = mid;
-        }
-    }
-
-    return bestPrice;
-}
-
-function calculateIRR(inputs, landPrice, totalConstruction) {
-    const landLoan = landPrice * inputs.landLTV;
-    const constructionLoan = totalConstruction * inputs.constructionLTV;
-    const totalEquity = landPrice + totalConstruction - landLoan - constructionLoan;
-
-    const totalMonths = inputs.leaseholdMonths;
-    const constructionMonths = inputs.constructionPeriod;
-
-    const landMonthlyRate = inputs.landRate / 12;
-    const constMonthlyRate = inputs.constructionRate / 12;
-
-    let landMonthlyPayment = 0;
-    if (landMonthlyRate > 0) {
-        landMonthlyPayment = landLoan * (landMonthlyRate * Math.pow(1 + landMonthlyRate, inputs.landTenor)) / (Math.pow(1 + landMonthlyRate, inputs.landTenor) - 1);
-    } else {
-        landMonthlyPayment = landLoan / inputs.landTenor;
-    }
-
-    let constMonthlyPayment = 0;
-    if (constMonthlyRate > 0) {
-        constMonthlyPayment = constructionLoan * (constMonthlyRate * Math.pow(1 + constMonthlyRate, inputs.constructionTenor)) / (Math.pow(1 + constMonthlyRate, inputs.constructionTenor) - 1);
-    } else {
-        constMonthlyPayment = constructionLoan / inputs.constructionTenor;
-    }
-
-    let landBalance = landLoan;
-    let constBalance = constructionLoan;
-
-    const cashflows = [-(totalEquity + inputs.equity)];
-
-    for (let m = 1; m <= totalMonths; m++) {
-        const isConstruction = m <= constructionMonths;
-        const operatingMonth = m - constructionMonths;
-        const yearNum = Math.ceil(operatingMonth / 12);
-
-        let grossRental = 0, netRental = 0;
-        if (!isConstruction) {
-            const currentRent = inputs.rentalRate * Math.pow(1 + inputs.rentEscalation, yearNum - 1);
-            grossRental = inputs.numPax * currentRent;
-            netRental = grossRental * inputs.occupancy;
-        }
-
-        let totalOpex = 0;
-        if (!isConstruction) {
-            const currentOpexPerPax = inputs.opexPerPax * Math.pow(1 + inputs.opexEscalation, yearNum - 1);
-            totalOpex = inputs.numPax * currentOpexPerPax + inputs.fixedOpex * Math.pow(1 + inputs.opexEscalation, yearNum - 1);
-        }
-
-        const ebitda = netRental - totalOpex;
-
-        let propertyTax = 0;
-        if (!isConstruction) {
-            propertyTax = (grossRental * 12 * 0.05 * 0.10) / 12;
-        }
-
-        const landInterest = landBalance * landMonthlyRate;
-        const constInterest = constBalance * constMonthlyRate;
-        const totalInterest = landInterest + constInterest;
-
-        let landPrincipal = 0, constPrincipal = 0;
-        if (m <= inputs.landTenor && landBalance > 0) {
-            landPrincipal = Math.min(landMonthlyPayment - landInterest, landBalance);
-        }
-        if (m <= inputs.constructionTenor && constBalance > 0) {
-            constPrincipal = Math.min(constMonthlyPayment - constInterest, constBalance);
-        }
-
-        landBalance = Math.max(0, landBalance - landPrincipal);
-        constBalance = Math.max(0, constBalance - constPrincipal);
-
-        const shInterest = inputs.shLoanAmount * inputs.shLoanRate / 12;
-        const shPrincipal = (m <= 120) ? inputs.shLoanAmount / 120 : 0;
-
-        const operatingYears = Math.ceil((totalMonths - constructionMonths) / 12);
-        const buildingValue = totalConstruction * 0.85;
-        const monthlyDepreciation = (!isConstruction) ? (buildingValue / Math.min(operatingYears, 25)) / 12 : 0;
-
-        const taxableIncome = Math.max(0, ebitda - propertyTax - totalInterest - monthlyDepreciation - shInterest);
-        const incomeTax = taxableIncome * 0.17;
-
-        // NO terminal value - leasehold returns to government at $0
-        const cf = ebitda - propertyTax - totalInterest - landPrincipal - constPrincipal - incomeTax - shInterest - shPrincipal;
-        cashflows.push(cf);
-    }
-
-    return computeIRR(cashflows);
-}
-
-function computeIRR(cashflows) {
-    let guess = 0.10;
-    for (let iter = 0; iter < 200; iter++) {
-        let npv = 0, dnpv = 0;
-        for (let t = 0; t < cashflows.length; t++) {
-            const denom = Math.pow(1 + guess, t);
-            npv += cashflows[t] / denom;
-            if (t > 0) {
-                dnpv -= t * cashflows[t] / Math.pow(1 + guess, t + 1);
+        function calculateScenario(inputs, scenario) {
+            // Adjust inputs based on scenario
+            let s = { ...inputs };
+            if (scenario === 'conservative') {
+                s.vacancyRate = Math.min(s.vacancyRate + 5, 30);
+                s.rentalEscalation = Math.max(s.rentalEscalation - 1, 0);
+                s.contingency = s.contingency + 5;
+                s.rentalRate = s.rentalRate * 0.95;
+            } else if (scenario === 'aggressive') {
+                s.vacancyRate = Math.max(s.vacancyRate - 3, 0);
+                s.rentalEscalation = s.rentalEscalation + 1;
+                s.contingency = Math.max(s.contingency - 3, 0);
+                s.rentalRate = s.rentalRate * 1.05;
             }
+
+            const gfa = s.landSize * s.plotRatio;
+            const nla = gfa * (s.efficiency / 100);
+
+            // Development costs
+            const profFeesAmt = s.constructionCost * (s.profFees / 100);
+            const contingencyAmt = s.constructionCost * (s.contingency / 100);
+            const totalDevCost = s.constructionCost + profFeesAmt + contingencyAmt + s.marketingCost;
+
+            // Annual gross rental
+            const annualGrossRental = s.numPax * s.rentalRate * 12;
+            const annualNetRental = annualGrossRental * (1 - s.vacancyRate / 100);
+
+            // Operating costs (base year)
+            let annualOpEx = 0;
+            opCosts.forEach(c => annualOpEx += c.amount);
+
+            // NOI projection over lease period
+            let totalNOI = 0;
+            let discountRate = s.equityIRR / 100;
+
+            for (let year = 1; year <= s.leasePeriod; year++) {
+                const rentMultiplier = Math.pow(1 + s.rentalEscalation / 100, year - 1);
+                const opExMultiplier = 1 + (s.rentalEscalation / 100 * 0.5 * (year - 1)); // OpEx escalates slower
+
+                const yearNOI = (annualNetRental * rentMultiplier) - (annualOpEx * opExMultiplier);
+                totalNOI += yearNOI / Math.pow(1 + discountRate, year);
+            }
+
+            // GDV = NPV of NOI
+            const gdv = totalNOI;
+
+            // Financing costs during development (interest reserve)
+            const devYears = s.devPeriod / 12;
+            const landInterest = s.landLoanAmt * (s.landLoanRate / 100) * devYears;
+            const conInterest = s.conLoanAmt * (s.conLoanRate / 100) * devYears * 0.5; // drawn progressively
+            const totalFinancing = landInterest + conInterest;
+
+            // Developer profit
+            const developerProfit = totalDevCost * (s.devMargin / 100);
+
+            // Residual Land Value
+            const landValue = gdv - totalDevCost - developerProfit - totalFinancing;
+            const landValuePSF = landValue / s.landSize;
+
+            // Equity calculation
+            const totalInvestment = landValue + totalDevCost + totalFinancing;
+            const equityRequired = totalInvestment - s.landLoanAmt - s.conLoanAmt;
+
+            // Simple project IRR (approximate)
+            const avgAnnualNOI = annualNetRental - annualOpEx;
+            const projectIRR = (avgAnnualNOI / totalInvestment) * 100;
+
+            // Yield on cost
+            const yieldOnCost = (avgAnnualNOI / totalInvestment) * 100;
+
+            return {
+                landValue,
+                landValuePSF,
+                gfa,
+                nla,
+                totalDevCost,
+                gdv,
+                equityRequired,
+                projectIRR,
+                yieldOnCost,
+                totalFinancing,
+                developerProfit,
+                annualNetRental,
+                annualOpEx,
+                avgAnnualNOI
+            };
         }
-        if (Math.abs(npv) < 0.01) return guess;
-        if (Math.abs(dnpv) < 1e-10) break;
-        const newGuess = guess - npv / dnpv;
-        if (newGuess <= -1 || newGuess >= 10) break;
-        if (Math.abs(newGuess - guess) < 1e-8) return newGuess;
-        guess = newGuess;
-    }
-    return guess;
-}
 
-function displayPrices(scenarios, inputs) {
-    const landSizeSqft = inputs.landSize * 10.764;
+        function calculateCashflow(inputs, landValue) {
+            const gfa = inputs.landSize * inputs.plotRatio;
+            const nla = gfa * (inputs.efficiency / 100);
 
-    ['conservative', 'medium', 'aggressive'].forEach(scen => {
-        const price = scenarios[scen].landPrice;
-        const psf = price / landSizeSqft;
-        const idPrice = scen === 'conservative' ? 'conPrice' : scen === 'medium' ? 'medPrice' : 'aggPrice';
-        const idPsf = scen === 'conservative' ? 'conPsf' : scen === 'medium' ? 'medPsf' : 'aggPsf';
-        document.getElementById(idPrice).textContent = formatCurrency(price);
-        document.getElementById(idPsf).textContent = 'S$' + psf.toFixed(0) + ' psf GFA';
-    });
-}
+            const profFeesAmt = inputs.constructionCost * (inputs.profFees / 100);
+            const contingencyAmt = inputs.constructionCost * (inputs.contingency / 100);
+            const totalDevCost = inputs.constructionCost + profFeesAmt + contingencyAmt + inputs.marketingCost;
 
-function displaySummary(data, inputs) {
-    document.getElementById('gfa').textContent = formatNumber(data.gfa) + ' sqm';
-    document.getElementById('totalDevCost').textContent = formatCurrency(data.totalConstruction + data.landPrice);
+            const annualGrossRental = inputs.numPax * inputs.rentalRate * 12;
 
-    const firstOpYear = data.annualData.find(y => !y.isConstruction);
-    document.getElementById('annualRevenue').textContent = firstOpYear ? formatCurrency(firstOpYear.grossRental) : '-';
+            // Loan payments (amortizing)
+            function pmt(rate, nper, pv) {
+                if (rate === 0) return pv / nper;
+                return pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
+            }
 
-    const irr = calculateIRR(inputs, data.landPrice, data.totalConstruction);
-    document.getElementById('projectIRR').textContent = (irr * 100).toFixed(2) + '%';
-}
+            const landMonthlyRate = inputs.landLoanRate / 100 / 12;
+            const landMonths = inputs.landLoanTenor * 12;
+            const landAnnualPayment = pmt(landMonthlyRate, landMonths, inputs.landLoanAmt) * 12;
 
-function displayCashflow(data) {
-    const tbody = document.querySelector('#cashflowTable tbody');
-    tbody.innerHTML = '';
+            const conMonthlyRate = inputs.conLoanRate / 100 / 12;
+            const conMonths = inputs.conLoanTenor * 12;
+            const conAnnualPayment = pmt(conMonthlyRate, conMonths, inputs.conLoanAmt) * 12;
 
-    data.annualData.forEach(row => {
-        const tr = document.createElement('tr');
-        const isFinal = row.isFinal;
-        const cfClass = row.netCashflow >= 0 ? 'positive' : 'negative';
-        const label = row.isConstruction ? ' (Const.)' : (isFinal ? ' (Exit)' : '');
+            const cashflows = [];
+            let cumulative = -(landValue + totalDevCost - inputs.landLoanAmt - inputs.conLoanAmt); // Initial equity outlay
 
-        tr.innerHTML = `
-            <td><strong>${row.year}</strong>${label}</td>
-            <td>${formatCurrency(row.grossRental)}</td>
-            <td>${formatCurrency(row.vacancyLoss)}</td>
-            <td>${formatCurrency(row.netRental)}</td>
-            <td>${formatCurrency(row.totalOpex)}</td>
-            <td><strong>${formatCurrency(row.ebitda)}</strong></td>
-            <td>${formatCurrency(row.propertyTax)}</td>
-            <td>${formatCurrency(row.totalInterest)}</td>
-            <td>${formatCurrency(row.annualDepreciation)}</td>
-            <td>${formatCurrency(row.taxableIncome)}</td>
-            <td>${formatCurrency(row.incomeTax)}</td>
-            <td>${formatCurrency(row.totalPrincipal)}</td>
-            <td>${formatCurrency(row.shInterest + row.shPrincipal)}</td>
-            <td class="${cfClass}">${formatCurrency(row.netCashflow)}</td>
-            <td>${formatCurrency(row.cumulativeCF)}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+            for (let year = 1; year <= inputs.leasePeriod; year++) {
+                const rentMultiplier = Math.pow(1 + inputs.rentalEscalation / 100, year - 1);
+                const grossRental = annualGrossRental * rentMultiplier;
+                const vacancyLoss = grossRental * (inputs.vacancyRate / 100);
+                const netRental = grossRental - vacancyLoss;
 
-function displayLoanSchedule(data) {
-    const tbody = document.querySelector('#loanTable tbody');
-    tbody.innerHTML = '';
+                // Operating costs with escalation
+                let opEx = 0;
+                opCosts.forEach(c => {
+                    const escalate = c.escalate ? Math.pow(1.02, year - 1) : 1;
+                    opEx += c.amount * escalate;
+                });
 
-    const maxMonth = Math.min(60, Math.max(data.landSchedule.length, data.constructionSchedule.length));
+                const noi = netRental - opEx;
 
-    for (let i = 0; i < maxMonth; i++) {
-        const ls = data.landSchedule[i] || {};
-        const cs = data.constructionSchedule[i] || {};
+                const landDebtService = year <= inputs.landLoanTenor ? landAnnualPayment : 0;
+                const conDebtService = year <= inputs.conLoanTenor ? conAnnualPayment : 0;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${ls.month || cs.month || '-'}</td>
-            <td>${formatCurrency(ls.balance)}</td>
-            <td>${formatCurrency(ls.payment)}</td>
-            <td>${formatCurrency(ls.interest)}</td>
-            <td>${formatCurrency(ls.principal)}</td>
-            <td>${formatCurrency(cs.balance)}</td>
-            <td>${formatCurrency(cs.payment)}</td>
-            <td>${formatCurrency(cs.interest)}</td>
-            <td>${formatCurrency(cs.principal)}</td>
-        `;
-        tbody.appendChild(tr);
-    }
-}
+                const netCashflow = noi - landDebtService - conDebtService;
+                cumulative += netCashflow;
 
-function displayTaxDetail(data) {
-    const tbody = document.querySelector('#taxTable tbody');
-    tbody.innerHTML = '';
+                cashflows.push({
+                    year,
+                    grossRental,
+                    vacancyLoss,
+                    netRental,
+                    opEx,
+                    noi,
+                    landDebtService,
+                    conDebtService,
+                    netCashflow,
+                    cumulative
+                });
+            }
 
-    data.annualData.forEach(row => {
-        const totalDeductions = row.totalOpex + row.propertyTax + row.totalInterest + row.annualDepreciation + row.shInterest;
-        const totalTax = row.incomeTax + row.propertyTax;
-        const effectiveRate = row.grossRental > 0 ? (totalTax / row.grossRental * 100) : 0;
+            return { cashflows, landAnnualPayment, conAnnualPayment };
+        }
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${row.year}</strong>${row.isConstruction ? ' (Const.)' : ''}</td>
-            <td>${formatCurrency(row.grossRental)}</td>
-            <td>${formatCurrency(totalDeductions)}</td>
-            <td>${formatCurrency(row.taxableIncome)}</td>
-            <td>${formatCurrency(row.incomeTax)}</td>
-            <td>${formatCurrency(row.propertyTax)}</td>
-            <td>${formatCurrency(totalTax)}</td>
-            <td>${effectiveRate.toFixed(2)}%</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
+        function updateResults() {
+            const inputs = getInputs();
 
-function displayFinalProfit(data, inputs) {
-    const totalRevenue = data.annualData.reduce((sum, r) => sum + r.netRental, 0);
-    const totalOpex = data.annualData.reduce((sum, r) => sum + r.totalOpex, 0);
-    const totalInterest = data.annualData.reduce((sum, r) => sum + r.totalInterest, 0);
-    const totalTax = data.annualData.reduce((sum, r) => sum + r.incomeTax + r.propertyTax, 0);
-    const totalPrincipal = data.annualData.reduce((sum, r) => sum + r.totalPrincipal, 0);
-    const totalSH = data.annualData.reduce((sum, r) => sum + r.shInterest + r.shPrincipal, 0);
+            // Update construction cost PSF
+            const gfa = inputs.landSize * inputs.plotRatio;
+            const conPSF = gfa > 0 ? inputs.constructionCost / gfa : 0;
+            document.getElementById('constructionCostPSF').textContent = '$' + conPSF.toFixed(2);
 
-    // Net profit = total net rental - total opex - total interest - total tax - total principal - total SH
-    const netProfit = totalRevenue - totalOpex - totalInterest - totalTax - totalPrincipal - totalSH;
+            // Calculate scenarios
+            const base = calculateScenario(inputs, 'base');
+            const conservative = calculateScenario(inputs, 'conservative');
+            const aggressive = calculateScenario(inputs, 'aggressive');
 
-    document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
-    document.getElementById('totalOpex').textContent = formatCurrency(totalOpex + totalPrincipal + totalSH);
-    document.getElementById('totalInterest').textContent = formatCurrency(totalInterest);
-    document.getElementById('totalTax').textContent = formatCurrency(totalTax);
+            // Update scenario cards
+            document.getElementById('conservativePrice').textContent = formatCurrency(conservative.landValue);
+            document.getElementById('conservativePSF').textContent = '$' + conservative.landValuePSF.toFixed(2) + ' / psf ppr';
 
-    document.getElementById('finalProfit').textContent = formatCurrency(netProfit);
-    document.getElementById('finalProfitSub').textContent = `Over ${(inputs.leaseholdMonths/12).toFixed(1)}-year leasehold | ${formatCurrency(data.landPrice)} land price | No terminal value (leasehold)`;
+            document.getElementById('basePrice').textContent = formatCurrency(base.landValue);
+            document.getElementById('basePSF').textContent = '$' + base.landValuePSF.toFixed(2) + ' / psf ppr';
 
-    // NPV using monthly discount rate
-    const cashflows = [-(data.totalEquity + inputs.equity)];
-    data.monthlyData.forEach(r => cashflows.push(r.netCashflow));
+            document.getElementById('aggressivePrice').textContent = formatCurrency(aggressive.landValue);
+            document.getElementById('aggressivePSF').textContent = '$' + aggressive.landValuePSF.toFixed(2) + ' / psf ppr';
 
-    let npv = 0;
-    const monthlyRate = Math.pow(1 + inputs.targetIRR, 1/12) - 1;
-    cashflows.forEach((cf, t) => { npv += cf / Math.pow(1 + monthlyRate, t); });
-    document.getElementById('npv').textContent = formatCurrency(npv);
+            // Update metrics
+            document.getElementById('gfaDisplay').textContent = formatNumber(Math.round(base.gfa)) + ' sqft';
+            document.getElementById('nlaDisplay').textContent = formatNumber(Math.round(base.nla)) + ' sqft';
+            document.getElementById('totalDevCost').textContent = formatCurrency(base.totalDevCost);
+            document.getElementById('gdvDisplay').textContent = formatCurrency(base.gdv);
+            document.getElementById('equityRequired').textContent = formatCurrency(base.equityRequired);
+            document.getElementById('projectIRR').textContent = base.projectIRR.toFixed(2) + '%';
+            document.getElementById('equityIRRDisplay').textContent = inputs.equityIRR.toFixed(1) + '%';
+            document.getElementById('yieldOnCost').textContent = base.yieldOnCost.toFixed(2) + '%';
 
-    // Equity IRR (monthly)
-    const eqIRR = computeIRR(cashflows);
-    const annualEqIRR = Math.pow(1 + eqIRR, 12) - 1;
-    document.getElementById('equityIRR').textContent = (annualEqIRR * 100).toFixed(2) + '%';
+            // Recommendation
+            const recBox = document.getElementById('recommendationBox');
+            const recText = document.getElementById('recommendationText');
 
-    // Cash multiple
-    const totalIn = -cashflows[0];
-    const totalOut = cashflows.slice(1).reduce((a, b) => a + b, 0);
-    document.getElementById('cashMultiple').textContent = (totalOut / totalIn).toFixed(2) + 'x';
-}
+            if (base.landValue <= 0) {
+                recBox.className = 'result-box danger';
+                recText.innerHTML = '<strong>❌ Not Viable:</strong> Under current assumptions, the project does not generate sufficient returns to justify any land bid. Consider reducing costs, increasing rents, or improving efficiency.';
+            } else if (base.yieldOnCost < inputs.equityIRR) {
+                recBox.className = 'result-box warning';
+                recText.innerHTML = '<strong>⚠️ Marginal:</strong> The yield on cost (' + base.yieldOnCost.toFixed(2) + '%) is below your target equity IRR (' + inputs.equityIRR.toFixed(1) + '%). Proceed with caution and sensitivity analysis.';
+            } else {
+                recBox.className = 'result-box highlight';
+                recText.innerHTML = '<strong>✅ Recommended Bid:</strong> Tender at <strong>' + formatCurrency(base.landValue) + '</strong> (Base Case). This achieves your ' + inputs.equityIRR.toFixed(1) + '% equity IRR target with a ' + inputs.devMargin + '% developer margin. Consider bidding ' + formatCurrency(conservative.landValue) + ' to build in a safety buffer.';
+            }
 
-function renderCharts() {
-    if (chartInstances.cashflow) chartInstances.cashflow.destroy();
-    if (chartInstances.loan) chartInstances.loan.destroy();
+            // Update cashflow
+            updateCashflow(inputs, base.landValue);
+        }
 
-    const years = cashflowData.annualData.map(d => 'Y' + d.year);
-    const netCashflows = cashflowData.annualData.map(d => d.netCashflow / 1e6);
-    const cumCashflows = cashflowData.annualData.map(d => d.cumulativeCF / 1e6);
+        function updateCashflow(inputs, landValue) {
+            const { cashflows } = calculateCashflow(inputs, landValue);
 
-    const ctx1 = document.getElementById('cashflowChart').getContext('2d');
-    chartInstances.cashflow = new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels: years,
-            datasets: [
-                {
-                    label: 'Net Cashflow (S$M)',
-                    data: netCashflows,
-                    backgroundColor: netCashflows.map(v => v >= 0 ? 'rgba(56, 161, 105, 0.7)' : 'rgba(229, 62, 62, 0.7)'),
-                    borderColor: netCashflows.map(v => v >= 0 ? 'rgba(56, 161, 105, 1)' : 'rgba(229, 62, 62, 1)'),
-                    borderWidth: 1,
-                    yAxisID: 'y'
+            const tbody = document.getElementById('cashflowBody');
+            tbody.innerHTML = '';
+
+            cashflows.forEach(cf => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>Year ${cf.year}</td>
+                    <td>${formatCurrency(cf.grossRental)}</td>
+                    <td class="negative">-${formatCurrency(cf.vacancyLoss)}</td>
+                    <td>${formatCurrency(cf.netRental)}</td>
+                    <td class="negative">-${formatCurrency(cf.opEx)}</td>
+                    <td class="positive">${formatCurrency(cf.noi)}</td>
+                    <td class="negative">-${formatCurrency(cf.landDebtService)}</td>
+                    <td class="negative">-${formatCurrency(cf.conDebtService)}</td>
+                    <td class="${cf.netCashflow >= 0 ? 'positive' : 'negative'}">${cf.netCashflow >= 0 ? '' : '-'}${formatCurrency(Math.abs(cf.netCashflow))}</td>
+                    <td class="${cf.cumulative >= 0 ? 'positive' : 'negative'}">${cf.cumulative >= 0 ? '' : '-'}${formatCurrency(Math.abs(cf.cumulative))}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update chart
+            updateChart(cashflows);
+        }
+
+        function updateChart(cashflows) {
+            const ctx = document.getElementById('cashflowChart').getContext('2d');
+
+            if (cashflowChart) {
+                cashflowChart.destroy();
+            }
+
+            const labels = cashflows.map(cf => 'Y' + cf.year);
+            const noiData = cashflows.map(cf => cf.noi / 1000000);
+            const netData = cashflows.map(cf => cf.netCashflow / 1000000);
+            const cumData = cashflows.map(cf => cf.cumulative / 1000000);
+
+            cashflowChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'NOI ($M)',
+                            data: noiData,
+                            backgroundColor: 'rgba(56, 161, 105, 0.7)',
+                            borderColor: 'rgba(56, 161, 105, 1)',
+                            borderWidth: 1,
+                            order: 2
+                        },
+                        {
+                            label: 'Net Cashflow ($M)',
+                            data: netData,
+                            backgroundColor: 'rgba(44, 82, 130, 0.7)',
+                            borderColor: 'rgba(44, 82, 130, 1)',
+                            borderWidth: 1,
+                            order: 3
+                        },
+                        {
+                            label: 'Cumulative ($M)',
+                            data: cumData,
+                            type: 'line',
+                            borderColor: 'rgba(237, 137, 54, 1)',
+                            backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            order: 1
+                        }
+                    ]
                 },
-                {
-                    label: 'Cumulative (S$M)',
-                    data: cumCashflows,
-                    type: 'line',
-                    borderColor: '#2c5282',
-                    backgroundColor: 'rgba(44, 82, 130, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    yAxisID: 'y1'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    }
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                title: { display: true, text: 'Annual Cashflow & Cumulative Position', font: { size: 14 } },
-                legend: { position: 'top' }
-            },
-            scales: {
-                y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Annual (S$M)' } },
-                y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Cumulative (S$M)' }, grid: { drawOnChartArea: false } }
+            });
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+            if (tab === 'table') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('tableTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('chartTab').classList.add('active');
+                if (cashflowChart) cashflowChart.resize();
             }
         }
-    });
 
-    const loanMonths = cashflowData.landSchedule.slice(0, 60).map(d => 'M' + d.month);
-    const landBalances = cashflowData.landSchedule.slice(0, 60).map(d => d.balance / 1e6);
-    const constBalances = cashflowData.constructionSchedule.slice(0, 60).map(d => d.balance / 1e6);
+        function renderOpCosts() {
+            const container = document.getElementById('opCostList');
+            container.innerHTML = '';
 
-    const ctx2 = document.getElementById('loanChart').getContext('2d');
-    chartInstances.loan = new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: loanMonths,
-            datasets: [
-                {
-                    label: 'Land Loan Balance (S$M)',
-                    data: landBalances,
-                    borderColor: '#c53030',
-                    backgroundColor: 'rgba(197, 48, 48, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                },
-                {
-                    label: 'Construction Loan Balance (S$M)',
-                    data: constBalances,
-                    borderColor: '#2c5282',
-                    backgroundColor: 'rgba(44, 82, 130, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: { display: true, text: 'Loan Amortisation (First 60 Months)', font: { size: 14 } },
-                legend: { position: 'top' }
-            },
-            scales: {
-                y: { title: { display: true, text: 'Balance (S$M)' } }
-            }
+            opCosts.forEach((cost, idx) => {
+                const row = document.createElement('div');
+                row.className = 'op-cost-row';
+                row.innerHTML = `
+                    <input type="text" placeholder="Cost name" value="${cost.name}" onchange="updateOpCost(${idx}, 'name', this.value)">
+                    <input type="number" placeholder="Amount" value="${cost.amount}" onchange="updateOpCost(${idx}, 'amount', parseFloat(this.value)||0)">
+                    <select onchange="updateOpCost(${idx}, 'escalate', this.value==='true')">
+                        <option value="true" ${cost.escalate ? 'selected' : ''}>Escalates</option>
+                        <option value="false" ${!cost.escalate ? 'selected' : ''}>Fixed</option>
+                    </select>
+                    <button class="remove-btn" onclick="removeOpCost(${idx})">✕</button>
+                `;
+                container.appendChild(row);
+            });
+
+            let total = 0;
+            opCosts.forEach(c => total += c.amount);
+            document.getElementById('totalOpCost').textContent = formatCurrency(total);
         }
-    });
-}
 
-// Initialize
-setScenario('medium');
-</script>
+        function addOpCost() {
+            opCosts.push({ name: "New Cost Item", amount: 0, escalate: true });
+            renderOpCosts();
+            updateResults();
+        }
+
+        function removeOpCost(idx) {
+            opCosts.splice(idx, 1);
+            renderOpCosts();
+            updateResults();
+        }
+
+        function updateOpCost(idx, field, value) {
+            opCosts[idx][field] = value;
+            if (field === 'amount') {
+                let total = 0;
+                opCosts.forEach(c => total += c.amount);
+                document.getElementById('totalOpCost').textContent = formatCurrency(total);
+            }
+            updateResults();
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            const inputs = getInputs();
+            const base = calculateScenario(inputs, 'base');
+            const conservative = calculateScenario(inputs, 'conservative');
+            const aggressive = calculateScenario(inputs, 'aggressive');
+
+            let y = 15;
+
+            // Header
+            doc.setFillColor(26, 58, 92);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.text('Dormitory Land Tender Report', 15, 18);
+            doc.setFontSize(10);
+            doc.text('Residual Land Value Analysis', 15, 25);
+            doc.text('Generated: ' + new Date().toLocaleDateString(), 160, 25);
+
+            y = 40;
+
+            // Tender Recommendation
+            doc.setTextColor(26, 58, 92);
+            doc.setFontSize(14);
+            doc.text('Tender Price Recommendation', 15, y);
+            y += 8;
+
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Conservative: ' + formatCurrency(conservative.landValue) + ' ($' + conservative.landValuePSF.toFixed(2) + '/psf ppr)', 15, y);
+            y += 6;
+            doc.text('Base Case:    ' + formatCurrency(base.landValue) + ' ($' + base.landValuePSF.toFixed(2) + '/psf ppr)', 15, y);
+            y += 6;
+            doc.text('Aggressive:   ' + formatCurrency(aggressive.landValue) + ' ($' + aggressive.landValuePSF.toFixed(2) + '/psf ppr)', 15, y);
+            y += 12;
+
+            // Key Metrics
+            doc.setTextColor(26, 58, 92);
+            doc.setFontSize(14);
+            doc.text('Key Development Metrics', 15, y);
+            y += 8;
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const metrics = [
+                ['Gross Floor Area', formatNumber(Math.round(base.gfa)) + ' sqft'],
+                ['Net Lettable Area', formatNumber(Math.round(base.nla)) + ' sqft'],
+                ['Total Development Cost', formatCurrency(base.totalDevCost)],
+                ['GDV (NPV)', formatCurrency(base.gdv)],
+                ['Equity Required', formatCurrency(base.equityRequired)],
+                ['Project IRR', base.projectIRR.toFixed(2) + '%'],
+                ['Yield on Cost', base.yieldOnCost.toFixed(2) + '%']
+            ];
+
+            metrics.forEach(([label, value]) => {
+                doc.text(label + ':', 15, y);
+                doc.text(value, 80, y);
+                y += 5;
+            });
+            y += 5;
+
+            // Assumptions Summary
+            doc.setTextColor(26, 58, 92);
+            doc.setFontSize(14);
+            doc.text('Key Assumptions', 15, y);
+            y += 8;
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const assumptions = [
+                ['Land Size', formatNumber(inputs.landSize) + ' sqft'],
+                ['Plot Ratio', inputs.plotRatio.toString()],
+                ['Lease Period', inputs.leasePeriod + ' years'],
+                ['Number of Pax', formatNumber(inputs.numPax)],
+                ['Monthly Rental/Pax', '$' + inputs.rentalRate],
+                ['Vacancy Rate', inputs.vacancyRate + '%'],
+                ['Rental Escalation', inputs.rentalEscalation + '%/yr'],
+                ['Construction Cost', formatCurrency(inputs.constructionCost)],
+                ['Developer Margin', inputs.devMargin + '%'],
+                ['Target Equity IRR', inputs.equityIRR + '%']
+            ];
+
+            assumptions.forEach(([label, value]) => {
+                doc.text(label + ':', 15, y);
+                doc.text(value, 70, y);
+                y += 5;
+            });
+
+            // New page for cashflow
+            doc.addPage();
+            y = 15;
+
+            doc.setTextColor(26, 58, 92);
+            doc.setFontSize(14);
+            doc.text('Cashflow Projection (Base Case)', 15, y);
+            y += 10;
+
+            const { cashflows } = calculateCashflow(inputs, base.landValue);
+
+            // Table header
+            doc.setFillColor(26, 58, 92);
+            doc.rect(15, y - 5, 180, 7, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            const headers = ['Year', 'Gross Rent', 'NOI', 'Land D/S', 'Con D/S', 'Net CF', 'Cumulative'];
+            let x = 17;
+            headers.forEach(h => {
+                doc.text(h, x, y);
+                x += 26;
+            });
+            y += 7;
+
+            // Table rows
+            doc.setTextColor(0, 0, 0);
+            cashflows.forEach((cf, i) => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 15;
+                }
+                if (i % 2 === 0) {
+                    doc.setFillColor(247, 250, 252);
+                    doc.rect(15, y - 4, 180, 5, 'F');
+                }
+                x = 17;
+                doc.text(cf.year.toString(), x, y); x += 26;
+                doc.text(formatCurrency(cf.grossRental), x, y); x += 26;
+                doc.text(formatCurrency(cf.noi), x, y); x += 26;
+                doc.text(formatCurrency(cf.landDebtService), x, y); x += 26;
+                doc.text(formatCurrency(cf.conDebtService), x, y); x += 26;
+                doc.text(formatCurrency(cf.netCashflow), x, y); x += 26;
+                doc.text(formatCurrency(cf.cumulative), x, y);
+                y += 5;
+            });
+
+            // Methodology
+            doc.addPage();
+            y = 15;
+            doc.setTextColor(26, 58, 92);
+            doc.setFontSize(14);
+            doc.text('Residual Land Value Methodology', 15, y);
+            y += 10;
+
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const methodology = [
+                'The Residual Land Value (RLV) approach determines the maximum price a developer',
+                'can pay for land while achieving a target return. The calculation works as follows:',
+                '',
+                '1. GROSS DEVELOPMENT VALUE (GDV)',
+                '   = NPV of all future net operating income over the leasehold period',
+                '   discounted at the target equity IRR',
+                '',
+                '2. TOTAL DEVELOPMENT COST',
+                '   = Construction cost + Professional fees + Contingency + Marketing',
+                '',
+                '3. DEVELOPER PROFIT',
+                '   = Total development cost x Target margin %',
+                '',
+                '4. FINANCING COSTS',
+                '   = Interest on land loan + Interest on construction loan (during dev period)',
+                '',
+                '5. RESIDUAL LAND VALUE',
+                '   = GDV - Total Dev Cost - Developer Profit - Financing Costs',
+                '',
+                'This approach ensures the land price is derived from what the market can bear,',
+                'rather than starting with an arbitrary land price and hoping for returns.'
+            ];
+
+            methodology.forEach(line => {
+                doc.text(line, 15, y);
+                y += 5;
+            });
+
+            doc.save('Dormitory_Tender_Analysis.pdf');
+        }
+
+        function exportCSV() {
+            const inputs = getInputs();
+            const base = calculateScenario(inputs, 'base');
+            const { cashflows } = calculateCashflow(inputs, base.landValue);
+
+            let csv = 'Year,Gross Rental,Vacancy Loss,Net Rental,Operating Expenses,NOI,Land Debt Service,Construction Debt Service,Net Cashflow,Cumulative Cashflow
+';
+
+            cashflows.forEach(cf => {
+                csv += `${cf.year},${cf.grossRental.toFixed(2)},${cf.vacancyLoss.toFixed(2)},${cf.netRental.toFixed(2)},${cf.opEx.toFixed(2)},${cf.noi.toFixed(2)},${cf.landDebtService.toFixed(2)},${cf.conDebtService.toFixed(2)},${cf.netCashflow.toFixed(2)},${cf.cumulative.toFixed(2)}
+`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Dormitory_Cashflow_Projection.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Attach listeners
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updateResults);
+        });
+
+        // Initialize
+        renderOpCosts();
+        updateResults();
+    </script>
 </body>
 </html>
